@@ -1,135 +1,135 @@
 <div align="center">
-  <img src="images%20and%20vids/logo.png" alt="AI Job Recommender Logo" width="400" />
+  <img src="assets/banner.png" alt="FreeJobAgent: resume in, ranked job matches out" width="100%" />
 </div>
 
-An intelligent, autonomous job recommendation agent that parses your resume and searches **LinkedIn**, **Indeed**, and **Google Jobs** for the perfect matching open roles — powered by LangGraph, [JobSpy](https://github.com/speedyapply/JobSpy), and your choice of **Google Gemini** or **OpenCode Zen** (free models).
+<br />
 
-### 🎥 Video Demo
+**FreeJobAgent** reads your PDF resume, scrapes live openings from **LinkedIn**, **Indeed** and **Google Jobs**, and asks an LLM of your choice to rank the best matches, with apply links and tailored application tips.
 
-https://github.com/Aryan-Pardeshi/Job-Recommendation-LangChain/raw/main/images%20and%20vids/2026-03-19%2013-47-19.mp4
-
----
-
-## ✨ Features
-
-### Core
-- **Resume Parsing Engine** — Upload your PDF resume directly into the app.
-- **Agentic Analysis** — Uses LangGraph to analyze your career history with your choice of **Google Gemini** or **OpenCode Zen** (free models like Big Pickle, MiMo V2 Pro, MiniMax M2.5).
-- **Multi-Platform Search** — Searches **LinkedIn**, **Indeed**, and **Google Jobs** simultaneously via [JobSpy](https://github.com/speedyapply/JobSpy) (free, no API key).
-- **Smart Location Detection** — Automatically detects your IP and pulls nearby jobs via the free `ip-api.com` service.
-- **Manual Preference Overrides** — Override AI detections with dropdowns for Work Type, Experience Level, Location, and Job Boards.
-- **Broader Second Pass** — The AI automatically performs a second broader search to find more opportunities.
-- **Application Tips** — Dynamically generates actionable interview and application tips tailored to your resume.
-
-### UI/UX
-- **Job Result Cards** — Clean card-based layout with company, location, salary, and source badges.
-- **Source Badges** — Color-coded badges for LinkedIn (blue), Indeed, and Google.
-- **Salary Display** — Formatted salary ranges with currency and interval.
-- **Expandable Descriptions** — View full job descriptions inline.
-- **Stats Dashboard** — See total jobs, remote count, salary ranges, and top companies at a glance.
-- **CSV Export** — Download all results as a CSV file.
-- **Raw Results Tab** — Browse unfiltered results alongside AI recommendations.
-- **Session State** — Preserves results across UI interactions.
-- **Sidebar Info Panel** — Quick access to how it works and what's powering the app.
-
-### Architecture
-- **MCP Server Ecosystem** — Decoupled [Model Context Protocol](https://modelcontextprotocol.io) server (`mcp_server.py`) exposes job search tools. The LangChain agent connects via `MultiServerMCPClient`.
-- **Three MCP Tools** — `search_jobs_tool` (filtered), `search_jobs_broad_tool` (unfiltered), `list_supported_sites`.
-- **Zero Cloud Dependencies** — Everything runs locally. No paid APIs for scraping.
-- **Dual Provider Support** — Choose between Google Gemini or OpenCode Zen (free models) in the UI. API keys are saved to `.env` automatically.
+It works with **any OpenAI-compatible API** (OpenAI, OpenRouter, Groq, Gemini, Ollama, LM Studio, ...). You supply an API key and a base URL; the app fetches the list of available models from that URL for you.
 
 ---
 
-## 🚀 How to Setup
+## How it works
 
-### 1. Clone the Repository
-```bash
-git clone <your-repository-url>
-cd Job-Recommendation-LangChain
+```
+PDF resume ──► Streamlit UI ──► LangChain agent ──► MCP server ──► JobSpy ──► LinkedIn / Indeed / Google Jobs
+                                      │
+                                      └── your LLM (LLM_BASE_URL + LLM_API_KEY)
 ```
 
-### 2. Install Dependencies
-This project uses `uv` for fast package and virtual environment management.
-```bash
-# First, install uv globally if you haven't already
-pip install uv
+1. You upload a resume and (optionally) tweak work type, experience level and location.
+2. The agent extracts your role, seniority and location, then calls two MCP tools: a filtered job search and a broader second pass.
+3. Results are ranked and shown with company, location, salary (when listed), an apply link and why it matches.
 
-# Sync and install the project environment
+Job scraping uses [JobSpy](https://github.com/speedyapply/JobSpy): free, no scraper API key needed.
+
+---
+
+## Quick start
+
+**Requirements:** Python 3.13+ and [uv](https://docs.astral.sh/uv/) (`pip install uv`).
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/Aryan-Pardeshi/FreeJobAgent.git
+cd FreeJobAgent
 uv sync
 ```
 
-### 3. Install JobSpy
-JobSpy's numpy pin conflicts with Python 3.13, so install it manually:
+### 2. Add your API key and base URL to `.env`
+
 ```bash
-pip install python-jobspy --no-deps
-pip install beautifulsoup4 markdownify regex tls-client
+cp .env.example .env        # on Windows PowerShell: Copy-Item .env.example .env
 ```
 
-### 4. API Setup & Configuration
-You need an API key for your chosen LLM provider.
+Open `.env` and set the two required variables:
 
-1. Copy the example `.env` file:
-   ```bash
-   cp .env.example .env
-   ```
+```env
+LLM_API_KEY=your_api_key_here
+LLM_BASE_URL=https://api.openai.com/v1
 
-2. **Choose your provider:**
+# Optional: model preselected in the UI
+# LLM_MODEL=gpt-4o-mini
+```
 
-   **Option A — Google Gemini**
-   - Go to [Google AI Studio](https://aistudio.google.com/api-keys) and generate an API key.
-   - Set `GOOGLE_API_KEY` in your `.env` file.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `LLM_API_KEY` | yes | API key for your provider. For local servers that ignore auth (Ollama, LM Studio) put any non-empty placeholder. |
+| `LLM_BASE_URL` | yes | Base URL of an OpenAI-compatible API, usually ending in `/v1`. |
+| `LLM_MODEL` | no | Model to preselect in the UI. If it is not in the fetched list, the first model is used. |
 
-   **Option B — OpenCode Zen (Free)**
-   - Go to [OpenCode Zen Auth](https://opencode.ai/auth) and get your API key.
-   - Set `OPENCODE_ZEN_API_KEY` in your `.env` file.
-   - Available free models: `big-pickle`, `mimo-v2-pro-free`, `mimo-v2-omni-free`, `minimax-m2.5-free`, `nemotron-3-super-free`.
+Common base URLs:
 
-   **Tip:** You can also enter your API key directly in the app UI — it will be saved to `.env` automatically.
+| Provider | `LLM_BASE_URL` |
+|----------|----------------|
+| OpenAI | `https://api.openai.com/v1` |
+| OpenRouter | `https://openrouter.ai/api/v1` |
+| Groq | `https://api.groq.com/openai/v1` |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| Ollama (local) | `http://localhost:11434/v1` |
+| LM Studio (local) | `http://localhost:1234/v1` |
 
-### 5. Run the Application
+> The model you pick must support **tool / function calling**, since the agent uses it to call the job-search tools.
+
+### 3. Run
+
 ```bash
 uv run streamlit run main.py
 ```
-Open your browser to `http://localhost:8501`, upload your resume, and click **Find Matching Jobs**!
+
+Open <http://localhost:8501>, upload your resume, pick a model in the sidebar and click **Find Matching Jobs**.
 
 ---
 
-## 🏗️ Project Structure
+## Model list
+
+The app calls `GET {LLM_BASE_URL}/models` with your key (`Authorization: Bearer ...`) and fills the sidebar model picker from the response. It understands the standard OpenAI format (`{"data": [{"id": "..."}]}`) and a few common variants.
+
+- The list is cached for 5 minutes; use **Refresh models** in the sidebar to reload it.
+- If the endpoint does not exist or the request fails, the app shows the reason and falls back to a text box where you can type a model name manually.
+
+---
+
+## Project structure
 
 ```
-├── main.py                 # Streamlit UI (entry point)
-├── mcp_server.py           # FastMCP server with 3 job-search tools
-├── pyproject.toml          # Project metadata and dependencies
-├── .env                    # Environment variables (GOOGLE_API_KEY, OPENCODE_ZEN_API_KEY)
-├── README.md               # This file
-│
+├── main.py              # Streamlit UI (entry point)
+├── mcp_server.py        # FastMCP server exposing the job-search tools
 ├── src/
-│   ├── agent.py            # LangGraph agent (LLM orchestration)
-│   ├── job_api.py          # JobSpy wrapper (search, stats, mappings)
-│   └── fetch_location.py   # IP geolocation via ip-api.com
-│
-└── images and vids/
-    ├── logo.png            # App logo
-    └── 2026-03-19 13-47-19.mp4  # Demo video
+│   ├── agent.py         # LangChain agent wired to the MCP tools
+│   ├── llm_config.py    # Env settings + model-list fetching
+│   ├── job_api.py       # JobSpy wrapper
+│   └── fetch_location.py# IP geolocation via ip-api.com
+├── assets/banner.png    # README / sidebar image
+├── .env.example         # Copy to .env and fill in
+└── pyproject.toml       # Dependencies (managed with uv)
 ```
 
-## 🔧 Tech Stack
+MCP tools exposed by `mcp_server.py`: `search_jobs_tool` (filtered), `search_jobs_broad_tool` (broader second pass) and `list_supported_sites`.
+
+## Tech stack
 
 | Component | Technology |
 |-----------|-----------|
-| **Frontend** | Streamlit |
-| **AI Agent** | LangGraph + Google Gemini or OpenCode Zen (free models) |
-| **Job Scraper** | JobSpy (LinkedIn, Indeed, Google Jobs) |
-| **Tool Protocol** | MCP (Model Context Protocol) via FastMCP |
-| **Resume Parser** | PyPDFLoader (LangChain) |
-| **Location** | ip-api.com (free) |
-| **Package Manager** | uv |
+| UI | Streamlit |
+| Agent | LangChain + LangGraph, any OpenAI-compatible LLM |
+| Tool protocol | MCP via FastMCP |
+| Job scraper | JobSpy (LinkedIn, Indeed, Google Jobs) |
+| Resume parser | PyPDFLoader |
+| Location | ip-api.com (free) |
+| Packaging | uv |
 
-## 📊 JobSpy Data Schema
+## Troubleshooting
 
-Each job result includes:
-- `title`, `company`, `site` (source platform)
-- `job_url`, `location`, `description`
-- `is_remote`, `job_type` (fulltime, parttime, contract, internship)
-- `min_amount`, `max_amount`, `currency`, `interval` (salary)
-- `date_posted`, `company_url`, `emails`
+- **"Missing LLM_API_KEY / LLM_BASE_URL"**: create `.env` in the project root (see step 2) and restart the app.
+- **401 / 403 when loading models**: the key is wrong or does not belong to that base URL.
+- **Model list empty or unavailable**: some providers do not expose `/models`; type the model name in the fallback box.
+- **Agent errors mentioning tools**: choose a model with tool-calling support.
+- **Few or no jobs**: LinkedIn and Indeed rate-limit scrapers. Wait a bit, broaden the location, or try a different work type. The agent passes the country to Indeed based on your location.
+
+## Notes
+
+- `python-jobspy` pins `numpy==1.26.3`, which has no wheels for Python 3.13+. `pyproject.toml` overrides it (`[tool.uv] override-dependencies`) so a plain `uv sync` works.
+- Your resume text is sent to the LLM provider you configure. Use a local model (Ollama, LM Studio) if that is a concern.

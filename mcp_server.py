@@ -1,5 +1,5 @@
 import logging
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from src.job_api import search_jobs, search_jobs_broad, SUPPORTED_SITES
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
@@ -15,6 +15,7 @@ def search_jobs_tool(
     experience_level: str = None,
     work_type: str = None,
     results_wanted: int = 10,
+    country: str = "USA",
 ) -> list[dict]:
     """Search for jobs across LinkedIn, Indeed, and Google.
 
@@ -24,10 +25,11 @@ def search_jobs_tool(
         experience_level: 1=Internship, 2=Entry, 3=Associate, 4=Mid-Senior, 5=Director
         work_type: 1=On-site, 2=Remote, 3=Hybrid
         results_wanted: Max results per site (default 10)
+        country: Full English country name, used for Indeed (e.g. "USA", "India", "UK", "Germany")
     """
     logger.info(
         f"search_jobs: title='{job_title}' location='{location}' "
-        f"exp={experience_level} work={work_type} results={results_wanted}"
+        f"exp={experience_level} work={work_type} results={results_wanted} country='{country}'"
     )
     try:
         return search_jobs(
@@ -36,6 +38,7 @@ def search_jobs_tool(
             experience_level=experience_level,
             work_type=work_type,
             results_wanted=results_wanted,
+            country=country,
         )
     except Exception as e:
         logger.error(f"search_jobs failed: {e}")
@@ -47,6 +50,7 @@ def search_jobs_broad_tool(
     job_title: str,
     location: str = "",
     results_wanted: int = 15,
+    country: str = "USA",
 ) -> list[dict]:
     """Broader job search without experience/work-type filters.
     Use this for a second pass to find more opportunities.
@@ -55,10 +59,19 @@ def search_jobs_broad_tool(
         job_title: Job title or role
         location: City, state, or country
         results_wanted: Max results (default 15)
+        country: Full English country name, used for Indeed (e.g. "USA", "India", "UK", "Germany")
     """
-    logger.info(f"search_broad: title='{job_title}' location='{location}' results={results_wanted}")
+    logger.info(
+        f"search_broad: title='{job_title}' location='{location}' "
+        f"results={results_wanted} country='{country}'"
+    )
     try:
-        return search_jobs_broad(job_title, location, results_wanted)
+        return search_jobs_broad(
+            job_title=job_title,
+            location=location,
+            results_wanted=results_wanted,
+            country=country,
+        )
     except Exception as e:
         logger.error(f"search_jobs_broad failed: {e}")
         return []

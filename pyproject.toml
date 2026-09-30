@@ -1,22 +1,24 @@
-# python-jobspy>=1.1.82  --  Install manually (numpy pin conflicts with Python 3.13):
-#   pip install python-jobspy --no-deps
-#   pip install beautifulsoup4 markdownify regex tls-client
 [project]
 name = "job-recommendation-langchain"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI job recommender: parses a resume, scrapes LinkedIn/Indeed/Google Jobs, and ranks matches with any OpenAI-compatible LLM."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "asyncio>=4.0.0",
-    "dotenv>=0.9.9",
     "fastmcp>=3.1.1",
     "langchain>=1.2.12",
     "langchain-community>=0.4.1",
-    "langchain-google-genai>=4.2.1",
     "langchain-mcp-adapters>=0.2.2",
     "langchain-openai>=1.2.2",
     "langgraph>=1.1.3",
     "pypdf>=6.9.1",
+    "python-dotenv>=1.0.0",
+    "python-jobspy>=1.1.82",
+    "requests>=2.31.0",
     "streamlit>=1.55.0",
 ]
+
+[tool.uv]
+# python-jobspy hard-pins numpy==1.26.3, which has no wheels for Python 3.13+.
+# Override so `uv sync` just works without manual installs.
+override-dependencies = ["numpy>=2.1"]
